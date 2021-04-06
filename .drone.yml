@@ -1,0 +1,28 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: docker main
+    image: plugins/docker
+    settings:
+      repo: registry.rashpile.com/me-site
+      registry: registry.rashpile.com
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+    when:
+      branch: [main]
+      event: push
+
+  - name: watchtower
+    image: idcooldi/drone-webhook
+    settings:
+      bearer:
+        from_secret: watchtower_token
+      urls: https://watchtower.rashpile.com/v1/update
+    when:
+      branch: [main]
+      event: push
+      status: [ success ]
