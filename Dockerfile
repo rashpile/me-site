@@ -1,21 +1,15 @@
-FROM node:alpine as builder
+FROM node:14-alpine3.13 as builder
 
-RUN apk update && apk add --no-cache make git python autoconf g++ libc6-compat libjpeg-turbo-dev libpng-dev nasm libtool automake
+RUN apk update && apk add --no-cache make git python3 autoconf g++ libc6-compat libjpeg-turbo-dev libpng-dev nasm libtool automake
 
-WORKDIR /usr/src/app
+WORKDIR /app
+
+COPY package.json .
+RUN npm install
 COPY . .
+RUN ["npm", "run", "build"]
 
-RUN yarn install
-RUN yarn build
-RUN rm -rf ./src ./node_modules /usr/local/lib/node_modules /usr/local/share/.cache/yarn/
-RUN mkdir -p /run/nginx
-
-FROM nginx:alpine
-
-RUN rm -rf /usr/share/nginx/html/*
-
-COPY --from=builder /usr/src/app/public /usr/share/nginx/html
-
+FROM nginx
 EXPOSE 80
+COPY --from=builder /app/public /usr/share/nginx/html
 
-CMD ["nginx", "-g", "daemon off;"]
